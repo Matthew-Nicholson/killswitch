@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react'
-import viteLogo from '/vite.svg'
-import reactLogo from './assets/react.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import viteLogo from "/vite.svg";
+import reactLogo from "./assets/react.svg";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
   useEffect(() => {
-    fetch('http://localhost:5001/count')
-    .then((res) => res.json())
-    .then(data => {
-      setCount(data.count)
-    })
-  }, [])
+    fetch("http://localhost:5001/count")
+      .then((res) => res.json())
+      .then((data) => {
+        setCount(data.count);
+      });
+  }, []);
 
   return (
     <>
@@ -36,7 +36,7 @@ function App() {
         Click on the Vite and React logos to learn more
       </p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
