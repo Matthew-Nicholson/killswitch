@@ -7,35 +7,45 @@ import sqlite3
 db = "feature_flag.db"
 con = sqlite3.connect(db)
 cur = con.cursor()
+
+# con.execute("DROP TABLE flag") 
+
 create_table_query = '''
-CREATE TABLE "flag" (
+CREATE TABLE  IF NOT EXISTS "flag" (
     "id" INTEGER NOT NULL UNIQUE,
     "name" TEXT NOT NULL,
     "description" TEXT,
+    "enabled" INTEGER,
     "roll_out" INTEGER,
     "deleted" INTEGER,
-    "deleted_at" INTEGER NOT NULL,
+    "deleted_at" INTEGER,
     "created_at" INTEGER NOT NULL,
     "updated_at" INTEGER NOT NULL,
-    PRIMARY KEY("id"),
+    PRIMARY KEY("id" AUTOINCREMENT),
     CHECK("roll_out" <= 100 AND "roll_out" >= 0),
     CHECK("deleted" <= 1 AND "deleted" >= 0)
 );
 '''
-# cur.execute(create_table_query)
-# con.commit()  # Commit to ensure the table is created
+cur.execute(create_table_query)
+con.commit()
 
 insert_query = '''
-INSERT INTO "flag" (id, name, description, roll_out, deleted, deleted_at, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO "flag" (name, description, roll_out, enabled, deleted, deleted_at, created_at, updated_at)
+VALUES ( ?, ?, ?, ?, ?, ?, ?, ?);
 '''
-data_to_insert = (1, 'New Feature', 'This feature enables X.', 75, 0, 0, int(datetime.now().timestamp()), int(datetime.now().timestamp()))
-
+# data_to_insert = ('New Feature', 'This feature enables X.', 75, 1, 0,0, int(datetime.now().timestamp()), int(datetime.now().timestamp()))
 # cur.execute(insert_query, data_to_insert)
 # con.commit()
+# con.close()
 
-# Close the connection
-con.close()
+def insert_feature_to_db(name,description,roll_out, enabled):
+    global db
+    con = sqlite3.connect(db)
+    cur = con.cursor()
+    data_to_insert = (name, description, roll_out, enabled, 0,0, int(datetime.now().timestamp()), int(datetime.now().timestamp()))
+    cur.execute(insert_query, data_to_insert)
+    con.commit()
+    con.close()
 
 app = Flask(__name__)
 CORS(
@@ -68,10 +78,13 @@ def feature():
     json = request.get_json()
     print(json)
     name = json["name"]
-    enabled = json["enabled"]
+    description= json["description"]
+    roll_out = json["roll_out"]
+    print(json['enabled'])
+    enabled = 1 if json['enabled'] is True else 0
+    insert_feature_to_db(name,description,roll_out,enabled)
     redis.set(name, enabled)
     return "OK"
-
 
 @app.route("/features", methods=["GET"])
 def features():
