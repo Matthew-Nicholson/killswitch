@@ -72,17 +72,20 @@ def index():
         redis.set("planet", planet)
     return render_template("index.html", planet=redis.get("planet").decode("utf-8"))
 
+def has_feature_been_deleted(feature):
+    return int(feature['deleted']) == 1   
+
+def convert_enabled_value(feature):
+    return 1 if feature['enabled']is True else 0
+
 
 @app.route("/features", methods=["POST"])
 def feature():
-    global redis
-
     json = request.get_json()
-    print(json)
     name = json["name"]
     description= json["description"]
     roll_out = json["roll_out"]
-    enabled = 1 if json['enabled'] is True else 0
+    enabled = convert_enabled_value(json)
 
     redis_key = f"feature:{name}"
     if redis.exists(redis_key):
@@ -101,14 +104,59 @@ def feature():
     
     return "Feature Created"
 
-
+@app.route("/feature/<name>", methods=["GET"])
+def get_feature(name):
+    redis_key =f"feature:{name}"
+    feature_data = redis.hgetall(redis_key)
+    if feature_data:
+        if has_feature_been_deleted(feature_data):
+             return jsonify({"error": f"Feature '{name}' not found"}), 404
+        return jsonify({"name":name, "data":feature_data}), 200
+    else:
+        return jsonify({"error": f"Feature '{name}' not found"}), 404
+  
 @app.route("/features", methods=["GET"])
-def features():
+def get_all_features():
     features = {}
     for key in redis.scan_iter(match="feature:*"):
         feature_data = redis.hgetall(key)
-        features[key] = feature_data
+        if(has_feature_been_deleted(feature_data) == False):
+            features[key] = feature_data
     return features
+
+@app.route("/feature/<name>", methods=["PUT"])
+def update_feature(name):
+    redis_key =f"feature:{name}"
+    if not redis.exists(redis_key):
+        return jsonify({"error": f"Feature '{name}' not found"}), 404
+    
+    update_data = request.get_json()
+
+    if not update_data:
+        return jsonify({"error": "No fields provided for update"}), 400
+    
+    update_data['enabled'] = 0 if update_data['enabled']== False else 1
+
+    redis.hset(redis_key, mapping=update_data)
+    redis.hset(redis_key, "updated_at", int(datetime.now().timestamp()))
+    return jsonify({"message": f"Feature '{name}' updated successfully", "updated_fields": update_data}), 200
+
+@app.route("/feature/<name>", methods=["DELETE"])
+def delete_feature(name):
+    redis_key =f"feature:{name}"
+    can_not_delete_key= not redis.exists(redis_key) or int(redis.hget(redis_key,'deleted')) == 1
+
+    if can_not_delete_key:
+        return jsonify({"error": f"Feature '{name}' not found"}), 404
+
+    redis.hset(redis_key,mapping={
+        'deleted': 1,
+        'deleted_at': int(datetime.now().timestamp())
+    })
+    return jsonify({"message": f"Feature '{name}' deleted successfully"}), 200
+
+
+
 
 @app.route("/count", methods=["GET"])
 def count():
