@@ -27,7 +27,6 @@ CREATE TABLE  IF NOT EXISTS "flag" (
 );
 '''
 cur.execute(create_table_query)
-con.commit()
 
 insert_query = '''
 INSERT INTO "flag" (name, description, roll_out, enabled, deleted, deleted_at, created_at, updated_at)
@@ -35,11 +34,12 @@ VALUES ( ?, ?, ?, ?, ?, ?, ?, ?);
 '''
 # data_to_insert = ('New Feature', 'This feature enables X.', 75, 1, 0,0, int(datetime.now().timestamp()), int(datetime.now().timestamp()))
 # cur.execute(insert_query, data_to_insert)
-# con.commit()
-# con.close()
+con.commit()
+con.close()
 
 def insert_feature_to_db(name,description,roll_out, enabled):
     global db
+    global insert_query
     con = sqlite3.connect(db)
     cur = con.cursor()
     data_to_insert = (name, description, roll_out, enabled, 0,0, int(datetime.now().timestamp()), int(datetime.now().timestamp()))
@@ -56,7 +56,7 @@ CORS(
         },
     },
 )
-redis = Redis(host="127.0.0.1", port=6379)
+redis = Redis(host="127.0.0.1", port=6379,decode_responses=True)
 try:
     ping = redis.ping()
     redis.set("planet", "World!")
@@ -75,24 +75,40 @@ def index():
 
 @app.route("/features", methods=["POST"])
 def feature():
+    global redis
+
     json = request.get_json()
     print(json)
     name = json["name"]
     description= json["description"]
     roll_out = json["roll_out"]
-    print(json['enabled'])
     enabled = 1 if json['enabled'] is True else 0
+
+    redis_key = f"feature:{name}"
+    if redis.exists(redis_key):
+        return f"Feature '{name}' already exists. Choose a different name."
+    
     insert_feature_to_db(name,description,roll_out,enabled)
-    redis.set(name, enabled)
-    return "OK"
+    redis.hset(redis_key, mapping= {
+        "enabled": enabled,
+        "description": description,
+        "roll_out": roll_out,
+        "deleted": 0,
+        "deleted_at": 0,
+        "created_at": int(datetime.now().timestamp()),
+        "updated_at": int(datetime.now().timestamp())
+    })
+    
+    return "Feature Created"
+
 
 @app.route("/features", methods=["GET"])
 def features():
     features = {}
     for key in redis.scan_iter(match="feature:*"):
-        features[key.decode("utf-8")] = redis.get(key).decode("utf-8")
+        feature_data = redis.hgetall(key)
+        features[key] = feature_data
     return features
-
 
 @app.route("/count", methods=["GET"])
 def count():
