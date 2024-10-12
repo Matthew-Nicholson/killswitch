@@ -1,19 +1,29 @@
 import { useEffect, useState } from "react";
 import { api } from "./services/api";
 import { Button } from "@nextui-org/button";
+import { Feature } from "./types";
+import FeatureCardList from "./components/feature-card-list";
+
+// Define the structure of the API response
+interface FeaturesApiResponse {
+  [key: string]: Feature; // The keys will be "feature:<id>", and the value will be the Feature object
+}
 
 export function App() {
-  const [count, setCount] = useState(0);
+  const [features, setFeatures] = useState<Feature[]>([]); // Features state is an array of Feature objects
   useEffect(() => {
     api
-      .get("/count")
-      .then((response) => {
-        setCount(response.data.count);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }, []);
+    .get<FeaturesApiResponse>("/features")
+    .then((response) => {
+      const featuresArray: Feature[] = Object.values(response.data);
+      setFeatures(featuresArray);
+
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+}, []);
+
 
   return (
     <>
@@ -24,16 +34,17 @@ export function App() {
         <p>{import.meta.env.VITE_HELLO}</p>
       </section>
       <br />
-      <section>
-        <h2>Testing API:</h2>
-        <p>Count should be 69420. Actual count: {count}</p>
-        {count === 0 && "Something is wrong: Make sure the API is running"}
-      </section>
-      <br />
-      <section>
-        <h2>Testing NextUI:</h2>
-        <Button>Click me!</Button>
+     <section>
+        <h2>Features List</h2>
+        {features.length > 0 ? (
+          <ul>
+            <FeatureCardList features={features}/>
+          </ul>
+        ) : (
+          <p>No features available.</p>
+        )}
       </section>
     </>
   );
 }
+

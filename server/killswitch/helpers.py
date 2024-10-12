@@ -4,7 +4,7 @@ from datetime import datetime
 from redis import Redis
 insert_query = '''
 INSERT INTO "flag" (name, description,enabled,roll_out, deleted, deleted_at, created_at, updated_at)
-VALUES ( ?, ?, ?, ?, ?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 '''
 
 redis = Redis(host="127.0.0.1", port=6379,decode_responses=True)
@@ -92,6 +92,9 @@ def add_feature_to_redis(db, feature):
     })
     
 def insert_feature_to_db(db, title,description,enabled,roll_out):
+    """
+    Adds the feature into the database and adds the feature to redis
+    """
     con = sqlite3.connect(db)
     cur = con.cursor()
     data_to_insert = {
@@ -105,8 +108,9 @@ def insert_feature_to_db(db, title,description,enabled,roll_out):
     "updated_at": int(datetime.now().timestamp())
     }
 
+    print(data_to_insert)
     data_to_insert['enabled'] = convert_enabled_value(data_to_insert)
-
+   
     feature = (
         data_to_insert["title"], 
         data_to_insert["description"],
@@ -117,6 +121,7 @@ def insert_feature_to_db(db, title,description,enabled,roll_out):
         data_to_insert['created_at'],
         data_to_insert['updated_at']
         )
+    print(feature)
     
     cur.execute(insert_query, feature)
     con.commit()
