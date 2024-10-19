@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import Flask, jsonify, render_template, request
 from redis import Redis
 from flask_cors import CORS
-from helpers import insert_test_data,create_new_table,insert_feature_to_db, has_feature_been_deleted, convert_enabled_value  # Import the helper functions
+from helpers import update_feature_to_db,create_new_table,insert_feature_to_db, has_feature_been_deleted, convert_enabled_value  # Import the helper functions
 import sqlite3
 
 insert_query = '''
@@ -85,14 +85,22 @@ def update_feature(id):
         return jsonify({"error": f"Feature '{id}' not found"}), 404
     
     update_data = request.get_json()
+    if update_data['updateData']:
+        update_data=update_data['updateData']
+        if(update_data['enabled'] == 'True'):
+            update_data['enabled']=True
+        else:
+            update_data['enabled']=False
+   
 
     if not update_data:
         return jsonify({"error": "No fields provided for update"}), 400
     
     update_data['enabled']= convert_enabled_value(update_data)
     update_data["updated_at"] = int(datetime.now().timestamp())
+    update_feature_to_db(db, update_data)
     redis.hset(redis_key, mapping=update_data)
-    return jsonify({"message": f"Feature '{id}' updated successfully", "updated_fields": update_data}), 200
+    return jsonify({"message": f"Feature updated successfully", "updated_fields": update_data}), 200
 
 @app.route("/feature/<id>", methods=["DELETE"])
 def delete_feature(id):

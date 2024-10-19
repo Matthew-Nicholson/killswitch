@@ -91,6 +91,25 @@ def add_feature_to_redis(db, feature):
         "updated_at": int(datetime.now().timestamp())
     })
     
+def update_feature_to_db(db,feature):
+    print('feature:',feature)
+    with sqlite3.connect(db) as conn:
+            cur = conn.cursor()
+            cur.execute(f'''
+                        UPDATE flag
+                        SET name = '{feature['title']}',
+                        description = '{feature['description']}',
+                        enabled = '{feature['enabled']}',
+                        roll_out = '{feature['roll_out']}',
+                        updated_at= '{feature['updated_at']}'
+                        WHERE id = {int(feature['id'])};
+            ''')
+            result = cur.fetchone()
+            if result:
+                print("result:", result)
+
+
+    
 def insert_feature_to_db(db, title,description,enabled,roll_out):
     """
     Adds the feature into the database and adds the feature to redis

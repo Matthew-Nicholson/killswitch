@@ -14,7 +14,7 @@ const FeatureCardList: React.FC<FeatureCardListProps> = ({features}) => {
             {features.map((feature) => (
                 <div className="feature-card">
                     <FeatureCard feature={feature} />
-                    <Link key={feature.id} to={`feature/${feature.id}`}>
+                    <Link key={feature.id} to={`feature/${feature.id}/edit`}>
                         <Button>Edit</Button>
                     </Link>
                 </div>

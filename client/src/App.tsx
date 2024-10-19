@@ -4,6 +4,7 @@ import { Feature } from "./types";
 import FeatureCardList from "./components/feature-card-list";
 import { Route, Routes } from "react-router-dom";
 import FeatureCardDetailView from "./components/feature-card-detail-view";
+import EditFeature from "./components/edit-feature";
 
 interface FeaturesApiResponse {
   [key: string]: Feature;
@@ -54,6 +55,7 @@ export function App() {
       />
 
       <Route path="/feature/:id" element={<FeatureCardDetailView />} />
+      <Route path="/feature/:id/edit" element={<EditFeature/>}/>
       
     </Routes>
   );
