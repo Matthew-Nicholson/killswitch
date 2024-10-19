@@ -9,7 +9,6 @@ function FeatureCardDetailView() {
   const [feature, setFeature] = useState<Feature | null>(null);
 
   useEffect(() => {
-    // Fetch individual feature by ID
     api
       .get<Feature>(`/feature/${id}`)
       .then((response) => setFeature(response.data))
@@ -28,8 +27,6 @@ function FeatureCardDetailView() {
         <p>{feature.data.description}</p>
 
         </div>
-      
-      {/* Render additional feature details as needed */}
     </div>
   );
 }

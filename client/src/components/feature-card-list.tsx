@@ -6,7 +6,6 @@ import { Button } from '@nextui-org/button';
 
 interface FeatureCardListProps{
     features: Feature[];
-    onFeatureClick: (id: string) => void; // Function to handle click event
 }
 
 const FeatureCardList: React.FC<FeatureCardListProps> = ({features}) => {

@@ -2,18 +2,15 @@ import { useEffect, useState } from "react";
 import { api } from "./services/api";
 import { Feature } from "./types";
 import FeatureCardList from "./components/feature-card-list";
-import { Route, Routes, useNavigate } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import FeatureCardDetailView from "./components/feature-card-detail-view";
 
-// Define the structure of the API response
 interface FeaturesApiResponse {
-  [key: string]: Feature; // The keys will be "feature:<id>", and the value will be the Feature object
+  [key: string]: Feature;
 }
 
 export function App() {
-  const [features, setFeatures] = useState<Feature[]>([]); // Features state is an array of Feature objects
-  const navigate = useNavigate();
-
+  const [features, setFeatures] = useState<Feature[]>([]);
   useEffect(() => {
     api
     .get<FeaturesApiResponse>("/features")
@@ -26,11 +23,6 @@ export function App() {
       console.error(error);
     });
 }, []);
-
-  const handleFeatureClick = (id: string) => {
-    navigate(`/features/${id}`);
-  };
-
 
   return (
     <Routes>
@@ -51,7 +43,6 @@ export function App() {
             <ul>
               <FeatureCardList 
               features={features}
-              onFeatureClick={handleFeatureClick}
               />
             </ul>
           ) : (
